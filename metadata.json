@@ -1,0 +1,7 @@
+{
+  "name": "Aureon Bank",
+  "description": "A premium digital neobank platform featuring multi-role access control, dynamic financial dashboards, and enterprise-grade UI/UX.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
