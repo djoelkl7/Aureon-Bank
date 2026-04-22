@@ -32,6 +32,16 @@ function bankReducer(state: BankState, action: Action): BankState {
         allUsers: updatedAllUsers,
         currentUser: state.currentUser?.id === action.payload.id ? action.payload : state.currentUser
       };
+    case 'CREATE_USER':
+      return {
+        ...state,
+        allUsers: [action.payload, ...state.allUsers]
+      };
+    case 'DELETE_USER':
+      return {
+        ...state,
+        allUsers: state.allUsers.filter(u => u.id !== action.payload)
+      };
     case 'APPROVE_LOAN':
       return {
         ...state,
@@ -107,6 +117,17 @@ function bankReducer(state: BankState, action: Action): BankState {
         ...state,
         currentUser: newUserAfterCancel,
         allUsers: state.allUsers.map(u => u.id === newUserAfterCancel.id ? newUserAfterCancel : u)
+      };
+    case 'UPDATE_SETTINGS':
+      if (!state.currentUser) return state;
+      const newUserWithSettings = {
+        ...state.currentUser,
+        settings: { ...state.currentUser.settings, ...action.payload }
+      };
+      return {
+        ...state,
+        currentUser: newUserWithSettings,
+        allUsers: state.allUsers.map(u => u.id === newUserWithSettings.id ? newUserWithSettings : u)
       };
     default:
       return state;

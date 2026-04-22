@@ -14,7 +14,13 @@ export const INITIAL_USERS: User[] = [
       { id: 't1', type: 'DEBIT', amount: 50000, category: 'Investment', description: 'Gold Payment', date: '2024-05-10' }
     ],
     loans: [],
-    recurringPayments: []
+    recurringPayments: [],
+    settings: {
+      hideBalance: false,
+      analyticsFocus: 'GROWTH',
+      transferLimit: 100000,
+      biometricLogin: true
+    }
   },
   {
     id: '2',
@@ -29,7 +35,13 @@ export const INITIAL_USERS: User[] = [
       { id: 't3', type: 'DEBIT', amount: 120, category: 'Dining', description: 'Starbucks Coffee', date: '2024-05-05' }
     ],
     loans: [],
-    recurringPayments: []
+    recurringPayments: [],
+    settings: {
+      hideBalance: false,
+      analyticsFocus: 'SPENDING',
+      transferLimit: 5000,
+      biometricLogin: true
+    }
   },
   {
     id: '3',
@@ -46,7 +58,13 @@ export const INITIAL_USERS: User[] = [
     ],
     transactions: [],
     loans: [],
-    recurringPayments: []
+    recurringPayments: [],
+    settings: {
+      hideBalance: false,
+      analyticsFocus: 'GROWTH',
+      transferLimit: 500000,
+      biometricLogin: false
+    }
   },
   {
     id: '4',
@@ -58,7 +76,13 @@ export const INITIAL_USERS: User[] = [
     failedLoginAttempts: 0,
     transactions: [],
     loans: [],
-    recurringPayments: []
+    recurringPayments: [],
+    settings: {
+      hideBalance: false,
+      analyticsFocus: 'GROWTH',
+      transferLimit: 0,
+      biometricLogin: true
+    }
   }
 ];
 

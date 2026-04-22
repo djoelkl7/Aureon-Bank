@@ -49,6 +49,13 @@ export interface RecurringPayment {
   status: 'ACTIVE' | 'CANCELLED' | 'COMPLETED';
 }
 
+export interface UserSettings {
+  hideBalance: boolean;
+  analyticsFocus: 'GROWTH' | 'SPENDING';
+  transferLimit: number;
+  biometricLogin: boolean;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -59,8 +66,12 @@ export interface User {
   transactions: Transaction[];
   loans: Loan[];
   recurringPayments: RecurringPayment[];
+  settings: UserSettings;
   subAccounts?: SubAccount[];
   failedLoginAttempts: number;
+  passportUrl?: string;
+  idNumber?: string;
+  email?: string;
 }
 
 export interface BankState {
@@ -74,6 +85,9 @@ export type Action =
   | { type: 'LOGIN'; payload: User }
   | { type: 'LOGOUT' }
   | { type: 'UPDATE_USER'; payload: User }
+  | { type: 'CREATE_USER'; payload: User }
+  | { type: 'DELETE_USER'; payload: string }
+  | { type: 'UPDATE_SETTINGS'; payload: UserSettings }
   | { type: 'TOGGLE_ACCOUNTS_MODE' }
   | { type: 'SET_LANGUAGE'; payload: 'EN' | 'ES' | 'FR' }
   | { type: 'APPROVE_LOAN'; payload: { loanId: string; userId: string } }

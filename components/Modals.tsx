@@ -1,7 +1,292 @@
 
 import React, { useState } from 'react';
-import { X, ExternalLink, ShieldCheck, Bitcoin, ArrowRightCircle, Calendar, Repeat } from 'lucide-react';
-import { Transaction, RecurringPayment } from '../types';
+import { X, ExternalLink, ShieldCheck, Bitcoin, ArrowRightCircle, Calendar, Repeat, Eye, EyeOff, BarChart3, Fingerprint, DollarSign, LayoutDashboard, TrendingUp, PieChart, Upload, UserPlus, Mail, Fingerprint as IDIcon, Globe } from 'lucide-react';
+import { Transaction, RecurringPayment, UserSettings, User, UserRole, UserStatus } from '../types';
+
+export const UserManagementModal: React.FC<{ 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onSubmit: (user: User) => void;
+  initialUser?: User | null;
+}> = ({ isOpen, onClose, onSubmit, initialUser }) => {
+  const [formData, setFormData] = useState<Partial<User>>(initialUser || {
+    username: '',
+    name: '',
+    email: '',
+    role: UserRole.PERSONAL,
+    status: UserStatus.ACTIVE,
+    balance: 0,
+    idNumber: '',
+    passportUrl: ''
+  });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, passportUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newUser: User = {
+      id: initialUser?.id || `usr-${Date.now()}`,
+      username: formData.username!,
+      name: formData.name!,
+      role: formData.role!,
+      status: formData.status!,
+      balance: formData.balance || 0,
+      transactions: initialUser?.transactions || [],
+      loans: initialUser?.loans || [],
+      recurringPayments: initialUser?.recurringPayments || [],
+      failedLoginAttempts: initialUser?.failedLoginAttempts || 0,
+      email: formData.email,
+      idNumber: formData.idNumber,
+      passportUrl: formData.passportUrl,
+      settings: initialUser?.settings || {
+        hideBalance: false,
+        analyticsFocus: 'GROWTH',
+        transferLimit: 10000,
+        biometricLogin: true
+      }
+    };
+    onSubmit(newUser);
+    onClose();
+  };
+
+  return (
+    <Modal title={initialUser ? 'Modify Digital Identity' : 'Provision New Identity'} isOpen={isOpen} onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Passport Upload Area */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">Passport / ID Deposit</label>
+          <div className={`relative border-2 border-dashed rounded-2xl p-6 transition-all flex flex-col items-center justify-center space-y-3 cursor-pointer overflow-hidden ${formData.passportUrl ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/10 hover:border-gold-bg/30 bg-white/5'}`}>
+            <input 
+              type="file" 
+              className="absolute inset-0 opacity-0 cursor-pointer" 
+              accept="image/*"
+              onChange={handleFileUpload}
+            />
+            {formData.passportUrl ? (
+              <img src={formData.passportUrl} alt="Passport Scan" className="w-full h-32 object-cover rounded-xl" />
+            ) : (
+              <>
+                <div className="p-3 bg-white/5 rounded-full text-gold-bg"><Upload size={24} /></div>
+                <div className="text-center">
+                  <p className="text-xs font-bold">Secure Document Scan</p>
+                  <p className="text-[10px] text-white/30">Drag & drop or browse for passport file</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">Full Legal Name</label>
+            <div className="relative">
+              <input 
+                type="text" required 
+                value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 focus:border-gold-bg outline-none transition-all text-xs"
+                placeholder="John Q. Client"
+              />
+              <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">Username</label>
+            <div className="relative">
+              <input 
+                type="text" required 
+                value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 focus:border-gold-bg outline-none transition-all text-xs"
+                placeholder="premium_user"
+              />
+              <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">Email Address</label>
+          <div className="relative">
+            <input 
+              type="email" required 
+              value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 focus:border-gold-bg outline-none transition-all text-xs"
+              placeholder="client@quantum.tech"
+            />
+            <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">Account Role</label>
+            <select 
+              value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
+              className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-3 focus:border-gold-bg outline-none transition-all text-xs"
+            >
+              <option value={UserRole.PERSONAL}>Personal</option>
+              <option value={UserRole.BUSINESS}>Business</option>
+              <option value={UserRole.ADMIN}>Super Admin</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">Provision Balance ($)</label>
+            <input 
+              type="number" 
+              value={formData.balance} onChange={e => setFormData({ ...formData, balance: parseFloat(e.target.value) })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 focus:border-gold-bg outline-none transition-all text-xs"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">Passport / ID Number</label>
+          <div className="relative">
+            <input 
+              type="text" 
+              value={formData.idNumber} onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 focus:border-gold-bg outline-none transition-all text-xs"
+              placeholder="A-9988776655"
+            />
+            <IDIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          className="w-full gold-bg text-[#0B1C2D] font-bold py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 shadow-lg shadow-gold-bg/20"
+        >
+          <UserPlus size={18} />
+          <span>{initialUser ? 'Update Digital Identity' : 'Provision Identity'}</span>
+        </button>
+      </form>
+    </Modal>
+  );
+};
+
+export const SettingsModal: React.FC<{ isOpen: boolean; onClose: () => void; settings: UserSettings; onUpdate: (settings: UserSettings) => void }> = ({ isOpen, onClose, settings, onUpdate }) => {
+  const [localSettings, setLocalSettings] = useState(settings);
+
+  const handleToggle = (key: keyof UserSettings) => {
+    const newVal = { ...localSettings, [key]: !localSettings[key] };
+    setLocalSettings(newVal);
+  };
+
+  const handleSave = () => {
+    onUpdate(localSettings);
+    onClose();
+  };
+
+  return (
+    <Modal title="Terminal Configuration" isOpen={isOpen} onClose={onClose}>
+      <div className="space-y-8">
+        {/* Dashboard Section */}
+        <div className="space-y-4">
+          <h4 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+            <LayoutDashboard size={12} className="gold-text" /> <span>Dashboard & Privacy</span>
+          </h4>
+          <div className="space-y-3">
+            <button 
+              onClick={() => handleToggle('hideBalance')}
+              className="w-full flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-gold-bg/30 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                {localSettings.hideBalance ? <EyeOff size={18} className="text-white/40" /> : <Eye size={18} className="gold-text" />}
+                <div className="text-left">
+                  <p className="text-sm font-bold text-white/80">Privacy Mode</p>
+                  <p className="text-[10px] text-white/30">Hide account balances from main view</p>
+                </div>
+              </div>
+              <div className={`w-10 h-5 rounded-full transition-colors relative ${localSettings.hideBalance ? 'gold-bg' : 'bg-white/10'}`}>
+                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform ${localSettings.hideBalance ? 'translate-x-6' : 'translate-x-1'}`} />
+              </div>
+            </button>
+
+            <button 
+              onClick={() => handleToggle('biometricLogin')}
+              className="w-full flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-gold-bg/30 transition-all group"
+            >
+              <div className="flex items-center gap-3">
+                <Fingerprint size={18} className={localSettings.biometricLogin ? 'text-emerald-400' : 'text-white/40'} />
+                <div className="text-left">
+                  <p className="text-sm font-bold text-white/80">Quantum Biometrics</p>
+                  <p className="text-[10px] text-white/30">Enable zero-knowledge biometric access</p>
+                </div>
+              </div>
+              <div className={`w-10 h-5 rounded-full transition-colors relative ${localSettings.biometricLogin ? 'gold-bg' : 'bg-white/10'}`}>
+                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform ${localSettings.biometricLogin ? 'translate-x-6' : 'translate-x-1'}`} />
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Analytics Section */}
+        <div className="space-y-4">
+          <h4 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+            <BarChart3 size={12} className="gold-text" /> <span>Analytics Architecture</span>
+          </h4>
+          <div className="grid grid-cols-2 gap-3">
+            <button 
+              onClick={() => setLocalSettings({ ...localSettings, analyticsFocus: 'GROWTH' })}
+              className={`p-4 rounded-2xl border transition-all text-left ${localSettings.analyticsFocus === 'GROWTH' ? 'gold-bg text-[#0B1C2D] border-gold-bg' : 'bg-white/5 border-white/5 text-white/60 hover:border-white/20'}`}
+            >
+              <TrendingUp size={16} className="mb-2" />
+              <p className="text-xs font-bold">Portfolio Growth</p>
+              <p className="text-[9px] opacity-60">Focus on net worth increase</p>
+            </button>
+            <button 
+              onClick={() => setLocalSettings({ ...localSettings, analyticsFocus: 'SPENDING' })}
+              className={`p-4 rounded-2xl border transition-all text-left ${localSettings.analyticsFocus === 'SPENDING' ? 'gold-bg text-[#0B1C2D] border-gold-bg' : 'bg-white/5 border-white/5 text-white/60 hover:border-white/20'}`}
+            >
+              <PieChart size={16} className="mb-2" />
+              <p className="text-xs font-bold">Spending Analysis</p>
+              <p className="text-[9px] opacity-60">Focus on debit categorization</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Transfer Section */}
+        <div className="space-y-4">
+          <h4 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+            <DollarSign size={12} className="gold-text" /> <span>Liquidity Safeguards</span>
+          </h4>
+          <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+            <label className="text-[10px] text-white/30 uppercase tracking-widest block mb-2 font-bold">Max Daily Disbursement Limit</label>
+            <div className="flex items-center gap-4">
+              <input 
+                type="range" 
+                min="1000" 
+                max="100000" 
+                step="5000"
+                value={localSettings.transferLimit}
+                onChange={e => setLocalSettings({ ...localSettings, transferLimit: parseInt(e.target.value) })}
+                className="flex-1 accent-gold-bg"
+              />
+              <span className="text-sm font-mono gold-text font-bold whitespace-nowrap">${localSettings.transferLimit.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
+        <button 
+          onClick={handleSave}
+          className="w-full gold-bg text-[#0B1C2D] font-bold py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 mt-4 shadow-lg shadow-gold-bg/20"
+        >
+          <ShieldCheck size={18} />
+          <span>Commit Configurations</span>
+        </button>
+      </div>
+    </Modal>
+  );
+};
 
 interface ModalProps {
   title: string;

@@ -4,7 +4,7 @@ import { useBank } from '../context/BankContext';
 import { TRANSLATIONS } from '../constants';
 import { LayoutDashboard, CreditCard, PieChart, Users, Settings, LogOut, ShieldCheck, Globe, Menu, X } from 'lucide-react';
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const Layout: React.FC<{ children: React.ReactNode; onSettingsClick?: () => void }> = ({ children, onSettingsClick }) => {
   const { state, dispatch } = useBank();
   const [isSidebarOpen, setSidebarOpen] = React.useState(false);
   const t = TRANSLATIONS[state.language];
@@ -85,7 +85,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 ))}
               </div>
             </div>
-            <button className="p-2 glass border-white/10 rounded-xl hover:bg-white/5 transition-colors relative">
+            <button 
+              onClick={onSettingsClick}
+              className="p-2 glass border-white/10 rounded-xl hover:bg-white/5 transition-colors relative"
+            >
               <Settings size={18} />
               <span className="absolute top-2 right-2 w-2 h-2 emerald-bg rounded-full border border-[#0B1C2D]" />
             </button>

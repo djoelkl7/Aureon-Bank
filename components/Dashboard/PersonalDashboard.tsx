@@ -96,7 +96,7 @@ export const PersonalDashboard: React.FC<{
           <div className="relative z-10">
             <h3 className="text-white/60 text-sm font-medium uppercase tracking-widest mb-2">Total Liquid Assets</h3>
             <p className="text-4xl md:text-5xl font-bold mb-8">
-              <span className="gold-text">$</span>{user.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              <span className="gold-text">$</span>{user.settings.hideBalance ? '••••••••' : user.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
             <div className="flex flex-wrap gap-4">
               <button 
@@ -193,15 +193,17 @@ export const PersonalDashboard: React.FC<{
 
       {/* Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass p-6 rounded-3xl">
+        <div className={`glass p-6 rounded-3xl transition-all duration-500 ${user.settings.analyticsFocus === 'GROWTH' ? 'ring-2 ring-gold-bg/20 scale-[1.02] bg-gold-bg/5' : 'opacity-60'}`}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold flex items-center space-x-2"><TrendingUp size={20} className="gold-text" /> <span>Portfolio Growth</span></h3>
+            {user.settings.analyticsFocus === 'GROWTH' && <span className="text-[10px] text-gold-text font-bold uppercase tracking-widest bg-gold-bg/10 px-2 py-1 rounded">Primary focus</span>}
           </div>
           <FinancialGrowthChart data={growthData} />
         </div>
-        <div className="glass p-6 rounded-3xl">
+        <div className={`glass p-6 rounded-3xl transition-all duration-500 ${user.settings.analyticsFocus === 'SPENDING' ? 'ring-2 ring-gold-bg/20 scale-[1.02] bg-gold-bg/5' : 'opacity-60'}`}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold flex items-center space-x-2"><PieChartIcon size={20} className="gold-text" /> <span>Spending Analysis</span></h3>
+            {user.settings.analyticsFocus === 'SPENDING' && <span className="text-[10px] text-gold-text font-bold uppercase tracking-widest bg-gold-bg/10 px-2 py-1 rounded">Primary focus</span>}
           </div>
           <SpendingPieChart data={pieData} />
         </div>

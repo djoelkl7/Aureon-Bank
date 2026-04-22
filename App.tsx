@@ -6,7 +6,7 @@ import { Layout } from './components/Layout';
 import { PersonalDashboard } from './components/Dashboard/PersonalDashboard';
 import { BusinessDashboard } from './components/Dashboard/BusinessDashboard';
 import { AdminDashboard } from './components/Dashboard/AdminDashboard';
-import { TransferModal, LoanModal, TransactionDetailModal, PremiumUpgradeModal, RecurringPaymentModal } from './components/Modals';
+import { TransferModal, LoanModal, TransactionDetailModal, PremiumUpgradeModal, RecurringPaymentModal, SettingsModal } from './components/Modals';
 import { useToast } from './components/Toast';
 import { ShieldCheck, Lock, ArrowRight } from 'lucide-react';
 
@@ -99,6 +99,7 @@ const MainApp: React.FC = () => {
   const [isLoanOpen, setLoanOpen] = useState(false);
   const [isUpgradeOpen, setUpgradeOpen] = useState(false);
   const [isRecurringOpen, setRecurringOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   if (!state.currentUser) return <LoginPage />;
@@ -110,6 +111,12 @@ const MainApp: React.FC = () => {
     }
     if (data.amount > state.currentUser!.balance) {
       showToast('Insufficient funds for this transaction.', 'error');
+      return;
+    }
+    
+    // Check against daily limit in settings
+    if (data.amount > state.currentUser!.settings.transferLimit) {
+      showToast(`Transfer exceeds your set daily limit of $${state.currentUser!.settings.transferLimit.toLocaleString()}`, 'error');
       return;
     }
 
@@ -178,7 +185,7 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <Layout onSettingsClick={() => setSettingsOpen(true)}>
       {ToastContainer}
       <div className="max-w-7xl mx-auto">
         {state.currentUser.role === UserRole.PERSONAL && (
@@ -196,6 +203,15 @@ const MainApp: React.FC = () => {
       <TransferModal isOpen={isTransferOpen} onClose={() => setTransferOpen(false)} onTransfer={handleTransfer} />
       <LoanModal isOpen={isLoanOpen} onClose={() => setLoanOpen(false)} onSubmit={handleLoan} />
       <RecurringPaymentModal isOpen={isRecurringOpen} onClose={() => setRecurringOpen(false)} onSubmit={handleAddRecurring} />
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setSettingsOpen(false)} 
+        settings={state.currentUser.settings}
+        onUpdate={(settings) => {
+          dispatch({ type: 'UPDATE_SETTINGS', payload: settings });
+          showToast('Security configurations committed successfully', 'success');
+        }}
+      />
       <TransactionDetailModal 
         isOpen={!!selectedTransaction} 
         onClose={() => setSelectedTransaction(null)} 
