@@ -38,6 +38,17 @@ export interface SubAccount {
   type: 'SAVINGS' | 'CHECKING' | 'PAYROLL';
 }
 
+export interface RecurringPayment {
+  id: string;
+  amount: number;
+  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  duration: number; // number of times
+  occurences: number; // times already occurred
+  description: string;
+  nextDate: string;
+  status: 'ACTIVE' | 'CANCELLED' | 'COMPLETED';
+}
+
 export interface User {
   id: string;
   username: string;
@@ -47,6 +58,7 @@ export interface User {
   balance: number;
   transactions: Transaction[];
   loans: Loan[];
+  recurringPayments: RecurringPayment[];
   subAccounts?: SubAccount[];
   failedLoginAttempts: number;
 }
@@ -68,4 +80,6 @@ export type Action =
   | { type: 'REJECT_LOAN'; payload: { loanId: string; userId: string } }
   | { type: 'LOCK_USER'; payload: string }
   | { type: 'UNLOCK_USER'; payload: string }
-  | { type: 'ADMIN_UPDATE_BALANCE'; payload: { userId: string; newBalance: number } };
+  | { type: 'ADMIN_UPDATE_BALANCE'; payload: { userId: string; newBalance: number } }
+  | { type: 'ADD_RECURRING'; payload: RecurringPayment }
+  | { type: 'CANCEL_RECURRING'; payload: string };

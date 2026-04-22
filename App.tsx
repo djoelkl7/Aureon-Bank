@@ -6,7 +6,7 @@ import { Layout } from './components/Layout';
 import { PersonalDashboard } from './components/Dashboard/PersonalDashboard';
 import { BusinessDashboard } from './components/Dashboard/BusinessDashboard';
 import { AdminDashboard } from './components/Dashboard/AdminDashboard';
-import { TransferModal, LoanModal } from './components/Modals';
+import { TransferModal, LoanModal, TransactionDetailModal, PremiumUpgradeModal, RecurringPaymentModal } from './components/Modals';
 import { useToast } from './components/Toast';
 import { ShieldCheck, Lock, ArrowRight } from 'lucide-react';
 
@@ -23,7 +23,6 @@ const LoginPage: React.FC = () => {
     
     setTimeout(() => {
       const user = state.allUsers.find(u => u.username === username);
-      // Premium ACCOUNTS Logic: Password is username + "01"
       if (user && password === `${username}01`) {
         dispatch({ type: 'LOGIN', payload: user });
         showToast(`Welcome, ${user.name}`, 'success');
@@ -98,6 +97,9 @@ const MainApp: React.FC = () => {
   const { showToast, ToastContainer } = useToast();
   const [isTransferOpen, setTransferOpen] = useState(false);
   const [isLoanOpen, setLoanOpen] = useState(false);
+  const [isUpgradeOpen, setUpgradeOpen] = useState(false);
+  const [isRecurringOpen, setRecurringOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   if (!state.currentUser) return <LoginPage />;
 
@@ -117,7 +119,9 @@ const MainApp: React.FC = () => {
       amount: data.amount,
       category: 'Transfer',
       description: data.description || `Transfer to ${data.to}`,
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      from: state.currentUser!.name,
+      to: data.to
     };
 
     const updatedUser = {
@@ -128,6 +132,11 @@ const MainApp: React.FC = () => {
 
     dispatch({ type: 'UPDATE_USER', payload: updatedUser });
     showToast(`$${data.amount} transferred successfully`, 'success');
+    
+    // Show upgrade modal after a slight delay
+    setTimeout(() => {
+      setUpgradeOpen(true);
+    }, 1500);
   };
 
   const handleLoan = (data: { amount: number; term: number }) => {
@@ -150,6 +159,24 @@ const MainApp: React.FC = () => {
     showToast('Loan application submitted for approval', 'info');
   };
 
+  const handleAddRecurring = (data: any) => {
+    const nextDate = new Date();
+    if (data.frequency === 'DAILY') nextDate.setDate(nextDate.getDate() + 1);
+    else if (data.frequency === 'WEEKLY') nextDate.setDate(nextDate.getDate() + 7);
+    else if (data.frequency === 'MONTHLY') nextDate.setMonth(nextDate.getMonth() + 1);
+
+    const recurring: any = {
+      ...data,
+      id: `rec-${Date.now()}`,
+      occurences: 0,
+      nextDate: nextDate.toISOString().split('T')[0],
+      status: 'ACTIVE'
+    };
+
+    dispatch({ type: 'ADD_RECURRING', payload: recurring });
+    showToast('Recurring payment mandate established', 'success');
+  };
+
   return (
     <Layout>
       {ToastContainer}
@@ -158,6 +185,8 @@ const MainApp: React.FC = () => {
           <PersonalDashboard 
             onTransferClick={() => setTransferOpen(true)} 
             onLoanClick={() => setLoanOpen(true)} 
+            onRecurringClick={() => setRecurringOpen(true)}
+            onTransactionClick={(tx) => setSelectedTransaction(tx)}
           />
         )}
         {state.currentUser.role === UserRole.BUSINESS && <BusinessDashboard />}
@@ -166,6 +195,16 @@ const MainApp: React.FC = () => {
 
       <TransferModal isOpen={isTransferOpen} onClose={() => setTransferOpen(false)} onTransfer={handleTransfer} />
       <LoanModal isOpen={isLoanOpen} onClose={() => setLoanOpen(false)} onSubmit={handleLoan} />
+      <RecurringPaymentModal isOpen={isRecurringOpen} onClose={() => setRecurringOpen(false)} onSubmit={handleAddRecurring} />
+      <TransactionDetailModal 
+        isOpen={!!selectedTransaction} 
+        onClose={() => setSelectedTransaction(null)} 
+        transaction={selectedTransaction} 
+      />
+      <PremiumUpgradeModal 
+        isOpen={isUpgradeOpen} 
+        onClose={() => setUpgradeOpen(false)} 
+      />
     </Layout>
   );
 };

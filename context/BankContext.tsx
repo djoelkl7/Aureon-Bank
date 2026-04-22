@@ -84,6 +84,30 @@ function bankReducer(state: BankState, action: Action): BankState {
         ...state,
         allUsers: state.allUsers.map(u => u.id === action.payload.userId ? { ...u, balance: action.payload.newBalance } : u)
       };
+    case 'ADD_RECURRING':
+      if (!state.currentUser) return state;
+      const newUserWithRecurring = {
+        ...state.currentUser,
+        recurringPayments: [...state.currentUser.recurringPayments, action.payload]
+      };
+      return {
+        ...state,
+        currentUser: newUserWithRecurring,
+        allUsers: state.allUsers.map(u => u.id === newUserWithRecurring.id ? newUserWithRecurring : u)
+      };
+    case 'CANCEL_RECURRING':
+      if (!state.currentUser) return state;
+      const newUserAfterCancel = {
+        ...state.currentUser,
+        recurringPayments: state.currentUser.recurringPayments.map(p => 
+          p.id === action.payload ? { ...p, status: 'CANCELLED' as const } : p
+        )
+      };
+      return {
+        ...state,
+        currentUser: newUserAfterCancel,
+        allUsers: state.allUsers.map(u => u.id === newUserAfterCancel.id ? newUserAfterCancel : u)
+      };
     default:
       return state;
   }

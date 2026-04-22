@@ -1,18 +1,58 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useBank } from '../../context/BankContext';
 import { useToast } from '../Toast';
-import { CreditCard, ArrowUpRight, ArrowDownLeft, FileText, Send, PieChart as PieChartIcon, TrendingUp } from 'lucide-react';
+import { CreditCard, ArrowUpRight, ArrowDownLeft, FileText, Send, PieChart as PieChartIcon, TrendingUp, Info, Filter, X, ChevronDown, Calendar, Repeat, ArrowRight } from 'lucide-react';
 import { FinancialGrowthChart, SpendingPieChart } from '../Charts';
-import { UserStatus } from '../../types';
+import { UserStatus, Transaction, RecurringPayment } from '../../types';
 
 export const PersonalDashboard: React.FC<{ 
   onTransferClick: () => void; 
   onLoanClick: () => void;
-}> = ({ onTransferClick, onLoanClick }) => {
-  const { state } = useBank();
+  onRecurringClick: () => void;
+  onTransactionClick: (transaction: Transaction) => void;
+}> = ({ onTransferClick, onLoanClick, onRecurringClick, onTransactionClick }) => {
+  const { state, dispatch } = useBank();
   const { showToast, ToastContainer } = useToast();
   const user = state.currentUser!;
+
+  // Filter States
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedType, setSelectedType] = useState('All');
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+
+  // Derived Categories
+  const categories = useMemo(() => {
+    const cats = new Set(user.transactions.map(t => t.category));
+    return ['All', ...Array.from(cats)];
+  }, [user.transactions]);
+
+  // Filtered Transactions
+  const filteredTransactions = useMemo(() => {
+    return user.transactions.filter(t => {
+      const matchesDate = (!startDate || t.date >= startDate) && (!endDate || t.date <= endDate);
+      const matchesCategory = selectedCategory === 'All' || t.category === selectedCategory;
+      const matchesType = selectedType === 'All' || 
+        (selectedType === 'Credit' && t.type === 'CREDIT') || 
+        (selectedType === 'Debit' && t.type === 'DEBIT');
+      
+      return matchesDate && matchesCategory && matchesType;
+    });
+  }, [user.transactions, startDate, endDate, selectedCategory, selectedType]);
+
+  const resetFilters = () => {
+    setStartDate('');
+    setEndDate('');
+    setSelectedCategory('All');
+    setSelectedType('All');
+  };
+
+  const handleCancelRecurring = (id: string) => {
+    dispatch({ type: 'CANCEL_RECURRING', payload: id });
+    showToast('Scheduled mandate cancelled', 'info');
+  };
 
   const growthData = [
     { name: 'Jan', value: 20000 },
@@ -79,21 +119,77 @@ export const PersonalDashboard: React.FC<{
         
         <div className="glass p-8 rounded-3xl flex flex-col justify-between">
           <div>
-            <h3 className="text-white/60 text-sm font-medium uppercase tracking-widest mb-4">Quick Actions</h3>
+            <h3 className="text-white/60 text-sm font-medium uppercase tracking-widest mb-4">Aureon Portal</h3>
             <div className="space-y-4">
-              <button onClick={() => showToast('Feature coming soon', 'info')} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors">
-                <span className="flex items-center space-x-3"><ArrowUpRight className="text-emerald-400" /> <span>Deposit</span></span>
+              <button onClick={onRecurringClick} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group text-left">
+                <span className="flex items-center space-x-3"><Repeat className="text-emerald-400" /> <span className="font-medium">Recurring</span></span>
+                <ArrowRight size={16} className="text-white/20 group-hover:text-gold-text translate-x-0 group-hover:translate-x-1 transition-all" />
               </button>
-              <button onClick={() => showToast('No pending bills', 'success')} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors">
-                <span className="flex items-center space-x-3"><ArrowDownLeft className="text-red-400" /> <span>Pay Bills</span></span>
+              <button onClick={() => showToast('No pending bills', 'success')} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group text-left">
+                <span className="flex items-center space-x-3"><ArrowDownLeft className="text-red-400" /> <span className="font-medium text-white/80">Premium Bills</span></span>
+                <ArrowRight size={16} className="text-white/20 group-hover:text-gold-text translate-x-0 group-hover:translate-x-1 transition-all" />
               </button>
-              <button onClick={handleDownloadStatement} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors">
-                <span className="flex items-center space-x-3"><FileText className="text-blue-400" /> <span>E-Statement</span></span>
+              <button onClick={handleDownloadStatement} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors group text-left">
+                <span className="flex items-center space-x-3"><FileText className="text-blue-400" /> <span className="font-medium text-white/80">Quantum PDF</span></span>
+                <ArrowRight size={16} className="text-white/20 group-hover:text-gold-text translate-x-0 group-hover:translate-x-1 transition-all" />
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Recurring Mandates */}
+      {user.recurringPayments && user.recurringPayments.length > 0 && (
+        <div className="glass p-6 rounded-3xl animate-fade-in">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold flex items-center space-x-2 text-white/80">
+              <Calendar size={20} className="gold-text" /> 
+              <span>Active Recurring Mandates</span>
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {user.recurringPayments.map(p => (
+              <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl relative overflow-hidden group">
+                {p.status === 'CANCELLED' && (
+                  <div className="absolute inset-0 bg-[#0B1C2D]/80 flex items-center justify-center z-10 font-bold text-white/30 backdrop-blur-[1px]">
+                    CANCELLED
+                  </div>
+                )}
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <p className="text-sm font-bold text-white/80">{p.description}</p>
+                    <p className="text-[10px] text-white/30 uppercase tracking-widest">{p.frequency}</p>
+                  </div>
+                  <p className="text-lg font-bold emerald-text">${p.amount.toLocaleString()}</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-white/30 tracking-widest uppercase">Next Execution</span>
+                    <span className="text-white/60 font-mono tracking-tighter">{p.nextDate}</span>
+                  </div>
+                  <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-gold-bg h-full transition-all duration-1000" 
+                      style={{ width: `${(p.occurences / p.duration) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] items-center">
+                    <span className="text-white/30">{p.occurences} / {p.duration} Cycles</span>
+                    {p.status === 'ACTIVE' && (
+                      <button 
+                        onClick={() => handleCancelRecurring(p.id)}
+                        className="text-red-400 hover:text-red-300 font-bold transition-colors uppercase tracking-widest text-[9px]"
+                      >
+                        Rescind
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -111,9 +207,88 @@ export const PersonalDashboard: React.FC<{
         </div>
       </div>
 
-      {/* Transactions */}
+      {/* Transactions Section */}
       <div className="glass p-6 rounded-3xl overflow-hidden">
-        <h3 className="font-bold mb-6">Recent Ledger Activity</h3>
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+          <h3 className="font-bold">Recent Ledger Activity</h3>
+          <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => setIsFilterVisible(!isFilterVisible)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-all ${isFilterVisible ? 'gold-bg text-[#0B1C2D] border-gold-bg' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}
+            >
+              <Filter size={16} />
+              <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
+              {(startDate || endDate || selectedCategory !== 'All' || selectedType !== 'All') && (
+                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse ml-1" />
+              )}
+            </button>
+            <span className="hidden md:block text-[10px] text-white/30 uppercase tracking-[0.2em] font-bold ml-4">Encrypted Ledger</span>
+          </div>
+        </div>
+
+        {/* Filter Bar */}
+        {isFilterVisible && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 animate-scale-in">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Start Date</label>
+              <input 
+                type="date" 
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all color-scheme-dark"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">End Date</label>
+              <input 
+                type="date" 
+                value={endDate}
+                onChange={e => setEndDate(e.target.value)}
+                className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all color-scheme-dark"
+              />
+            </div>
+            <div className="space-y-1 relative">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Category</label>
+              <div className="relative">
+                <select 
+                  value={selectedCategory}
+                  onChange={e => setSelectedCategory(e.target.value)}
+                  className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all appearance-none cursor-pointer"
+                >
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+              </div>
+            </div>
+            <div className="space-y-1 relative">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Type</label>
+              <div className="relative">
+                <select 
+                  value={selectedType}
+                  onChange={e => setSelectedType(e.target.value)}
+                  className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all appearance-none cursor-pointer"
+                >
+                  <option value="All">All Types</option>
+                  <option value="Credit">Credits Only</option>
+                  <option value="Debit">Debits Only</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+              </div>
+            </div>
+            <div className="flex items-end">
+              <button 
+                onClick={resetFilters}
+                className="w-full flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white p-2 rounded-xl border border-white/5 transition-all text-xs font-bold h-[34px]"
+              >
+                <X size={14} />
+                <span>Reset</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -122,21 +297,37 @@ export const PersonalDashboard: React.FC<{
                 <th className="pb-4 font-medium">Category</th>
                 <th className="pb-4 font-medium">Date</th>
                 <th className="pb-4 font-medium text-right">Amount</th>
+                <th className="pb-4 font-medium text-right w-10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {user.transactions.length > 0 ? user.transactions.map(t => (
-                <tr key={t.id} className="group hover:bg-white/5 transition-colors">
-                  <td className="py-4 font-medium">{t.description}</td>
-                  <td className="py-4"><span className="text-xs bg-white/5 px-2 py-1 rounded-full">{t.category}</span></td>
-                  <td className="py-4 text-white/40 text-sm">{t.date}</td>
+              {filteredTransactions.length > 0 ? filteredTransactions.map(t => (
+                <tr 
+                  key={t.id} 
+                  onClick={() => onTransactionClick(t)}
+                  className="group hover:bg-white/5 transition-all cursor-pointer"
+                >
+                  <td className="py-4">
+                    <p className="font-medium group-hover:gold-text transition-colors">{t.description}</p>
+                    <p className="text-[10px] text-white/20 font-mono tracking-tighter">{t.id}</p>
+                  </td>
+                  <td className="py-4"><span className="text-[10px] bg-white/5 border border-white/5 px-2 py-1 rounded-full uppercase tracking-wider">{t.category}</span></td>
+                  <td className="py-4 text-white/40 text-sm font-mono">{t.date}</td>
                   <td className={`py-4 text-right font-bold ${t.type === 'CREDIT' ? 'emerald-text' : 'text-white'}`}>
-                    {t.type === 'CREDIT' ? '+' : '-'}${t.amount.toLocaleString()}
+                    {t.type === 'CREDIT' ? '+' : '-'}${t.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-4 text-right">
+                    <Info size={14} className="text-white/10 group-hover:text-gold-text transition-colors ml-auto" />
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-white/20">No recent activity detected</td>
+                  <td colSpan={5} className="py-12 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-2 opacity-20">
+                      <Filter size={40} />
+                      <p className="text-sm">No transactions match your current filters</p>
+                    </div>
+                  </td>
                 </tr>
               )}
             </tbody>

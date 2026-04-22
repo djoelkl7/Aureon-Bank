@@ -13,7 +13,8 @@ export const INITIAL_USERS: User[] = [
     transactions: [
       { id: 't1', type: 'DEBIT', amount: 50000, category: 'Investment', description: 'Gold Payment', date: '2024-05-10' }
     ],
-    loans: []
+    loans: [],
+    recurringPayments: []
   },
   {
     id: '2',
@@ -27,7 +28,8 @@ export const INITIAL_USERS: User[] = [
       { id: 't2', type: 'CREDIT', amount: 5000, category: 'Salary', description: 'Monthly Payroll', date: '2024-05-01' },
       { id: 't3', type: 'DEBIT', amount: 120, category: 'Dining', description: 'Starbucks Coffee', date: '2024-05-05' }
     ],
-    loans: []
+    loans: [],
+    recurringPayments: []
   },
   {
     id: '3',
@@ -43,7 +45,8 @@ export const INITIAL_USERS: User[] = [
       { id: 's3', name: 'Tax Savings', balance: 30450.00, type: 'SAVINGS' }
     ],
     transactions: [],
-    loans: []
+    loans: [],
+    recurringPayments: []
   },
   {
     id: '4',
@@ -54,7 +57,8 @@ export const INITIAL_USERS: User[] = [
     balance: 0,
     failedLoginAttempts: 0,
     transactions: [],
-    loans: []
+    loans: [],
+    recurringPayments: []
   }
 ];
 
