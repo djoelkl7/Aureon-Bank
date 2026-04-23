@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import { useBank } from '../../context/BankContext';
 import { useToast } from '../Toast';
-import { Shield, Users, Lock, Unlock, Check, X, AlertCircle, Edit3, Settings, UserPlus, Search, Filter, Trash2, LayoutGrid, List } from 'lucide-react';
+import { Shield, Users, Lock, Unlock, Check, X, AlertCircle, Edit3, Settings, UserPlus, Search, Filter, Trash2, LayoutGrid, List, FileSearch, UserCircle } from 'lucide-react';
 import { UserRole, UserStatus, User } from '../../types';
-import { UserManagementModal } from '../Modals';
+import { UserManagementModal, UserProfileDetailModal } from '../Modals';
 
 export const AdminDashboard: React.FC = () => {
   const { state, dispatch } = useBank();
@@ -15,6 +15,7 @@ export const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [viewingUserDetail, setViewingUserDetail] = useState<User | null>(null);
 
   const totalFunds = state.allUsers.reduce((acc, u) => acc + u.balance, 0);
   const activeUsers = state.allUsers.filter(u => u.status === UserStatus.ACTIVE).length;
@@ -141,14 +142,15 @@ export const AdminDashboard: React.FC = () => {
                       <th className="pb-4">Identity</th>
                       <th className="pb-4">Asset Value</th>
                       <th className="pb-4">Status</th>
+                      <th className="pb-4 text-right">Access</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {state.allUsers.slice(0, 5).map(u => (
-                      <tr key={u.id} className="group hover:bg-white/5 transition-colors">
+                      <tr key={u.id} className="group hover:bg-white/5 transition-colors cursor-pointer" onClick={() => setViewingUserDetail(u)}>
                         <td className="py-4">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-bold gold-text">{u.name.charAt(0)}</div>
+                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-bold gold-text overflow-hidden">{u.passportUrl ? <img src={u.passportUrl} className="w-full h-full object-cover" /> : u.name.charAt(0)}</div>
                             <div>
                               <p className="font-bold text-sm tracking-tight">{u.name}</p>
                               <p className="text-[10px] text-white/20">@{u.username}</p>
@@ -158,6 +160,11 @@ export const AdminDashboard: React.FC = () => {
                         <td className="py-4 font-bold text-white/80 tracking-tighter">${u.balance.toLocaleString()}</td>
                         <td className="py-4">
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-widest ${u.status === UserStatus.ACTIVE ? 'bg-emerald-500/10 emerald-text' : 'bg-red-500/10 text-red-400'}`}>{u.status}</span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <button className="p-2 hover:bg-white/10 rounded-lg text-white/20 group-hover:text-gold-bg transition-all">
+                            <FileSearch size={14} />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -249,7 +256,7 @@ export const AdminDashboard: React.FC = () => {
               <tbody className="divide-y divide-white/5">
                 {filteredUsers.map(u => (
                   <tr key={u.id} className="group hover:bg-white/5 transition-all">
-                    <td className="py-6">
+                    <td className="py-6 cursor-pointer" onClick={() => setViewingUserDetail(u)}>
                       <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden group-hover:border-gold-bg/30">
                           {u.passportUrl ? (
@@ -298,6 +305,7 @@ export const AdminDashboard: React.FC = () => {
                     </td>
                     <td className="py-6 text-right">
                       <div className="flex items-center justify-end space-x-3 opacity-40 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => setViewingUserDetail(u)} className="p-3 bg-white/5 hover:bg-white/20 transition-all rounded-xl text-white/60" title="Identity Dossier"><FileSearch size={18} /></button>
                         {u.status === UserStatus.ACTIVE ? (
                           <button onClick={() => dispatch({ type: 'LOCK_USER', payload: u.id })} className="p-3 hover:bg-red-500 hover:text-white transition-all rounded-xl" title="Lock Identity"><Lock size={18} /></button>
                         ) : (
@@ -320,6 +328,11 @@ export const AdminDashboard: React.FC = () => {
         onClose={() => { setIsManageModalOpen(false); setEditingUser(null); }}
         onSubmit={handleCreateOrUpdateUser}
         initialUser={editingUser}
+      />
+      <UserProfileDetailModal 
+        isOpen={!!viewingUserDetail}
+        onClose={() => setViewingUserDetail(null)}
+        user={viewingUserDetail}
       />
     </div>
   );

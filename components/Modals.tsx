@@ -1,7 +1,111 @@
 
 import React, { useState } from 'react';
-import { X, ExternalLink, ShieldCheck, Bitcoin, ArrowRightCircle, Calendar, Repeat, Eye, EyeOff, BarChart3, Fingerprint, DollarSign, LayoutDashboard, TrendingUp, PieChart, Upload, UserPlus, Mail, Fingerprint as IDIcon, Globe } from 'lucide-react';
+import { X, ExternalLink, ShieldCheck, Bitcoin, ArrowRightCircle, Calendar, Repeat, Eye, EyeOff, BarChart3, Fingerprint, DollarSign, LayoutDashboard, TrendingUp, PieChart, Upload, UserPlus, Mail, Fingerprint as IDIcon, Globe, User as UserIcon, BadgeCheck, FileText } from 'lucide-react';
 import { Transaction, RecurringPayment, UserSettings, User, UserRole, UserStatus } from '../types';
+
+export const UserProfileDetailModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  user: User | null;
+}> = ({ isOpen, onClose, user }) => {
+  if (!user) return null;
+
+  return (
+    <Modal title="Identity Profile Dossier" isOpen={isOpen} onClose={onClose}>
+      <div className="space-y-8">
+        {/* Profile Header */}
+        <div className="flex items-center space-x-6 p-6 bg-white/5 rounded-3xl border border-white/10 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+            <UserIcon size={120} />
+          </div>
+          <div className="w-24 h-24 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden shadow-2xl">
+            {user.passportUrl ? (
+              <img src={user.passportUrl} alt={user.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-4xl font-bold gold-text opacity-40">{user.name.charAt(0)}</span>
+            )}
+          </div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-2xl font-bold tracking-tight">{user.name}</h3>
+              {user.status === UserStatus.ACTIVE && <BadgeCheck size={20} className="text-emerald-400" />}
+            </div>
+            <p className="text-emerald-400/60 font-mono text-xs tracking-[0.2em] uppercase">@{user.username}</p>
+            <div className="mt-3 flex gap-2">
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-widest ${user.role === UserRole.ADMIN ? 'gold-bg text-[#0B1C2D]' : 'bg-white/10 text-white/60 uppercase'}`}>
+                {user.role}
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase ${user.status === UserStatus.ACTIVE ? 'bg-emerald-500/10 emerald-text' : 'bg-red-500/10 text-red-400'}`}>
+                {user.status}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Identity Details */}
+        <div className="space-y-4">
+          <h4 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+            <IDIcon size={12} className="gold-text" /> <span>Credential Authentication</span>
+          </h4>
+          <div className="grid grid-cols-1 gap-3">
+            <div className="p-4 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2 text-white/40">
+                  <Mail size={14} />
+                  <span className="text-[10px] uppercase font-bold tracking-widest">Digital Registry</span>
+                </div>
+                <span className="text-sm font-medium">{user.email || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2 text-white/40">
+                  <IDIcon size={14} />
+                  <span className="text-[10px] uppercase font-bold tracking-widest">Passport Number</span>
+                </div>
+                <span className="text-sm font-mono gold-text font-bold uppercase tracking-widest">{user.idNumber || 'KYC_UNVERIFIED'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2 text-white/40">
+                  <FileText size={14} />
+                  <span className="text-[10px] uppercase font-bold tracking-widest">Liquid Assets</span>
+                </div>
+                <span className="text-lg font-bold tracking-tighter">${user.balance.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Passport / Identification Visual */}
+        <div className="space-y-4">
+          <h4 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+            <Globe size={12} className="gold-text" /> <span>Primary Identity Document</span>
+          </h4>
+          <div className="aspect-[16/10] bg-white/5 border border-white/10 rounded-2xl overflow-hidden relative group">
+            {user.passportUrl ? (
+              <img src={user.passportUrl} alt="Passport Scan" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center space-y-2 opacity-20">
+                <Upload size={32} />
+                <p className="text-xs font-bold uppercase tracking-widest">Verification Pending</p>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0B1C2D]/80 to-transparent p-4 flex flex-col justify-end">
+              <p className="text-[10px] gold-text font-bold uppercase tracking-widest">Government Issued Clearance</p>
+              <p className="text-[8px] text-white/40 font-mono tracking-tighter">REF: {user.id || 'SYS-ID-PENDING'}</p>
+            </div>
+          </div>
+        </div>
+
+        <button 
+          onClick={onClose}
+          className="w-full gold-bg text-[#0B1C2D] font-bold py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-2 mt-4 shadow-lg shadow-gold-bg/20"
+        >
+          <ShieldCheck size={18} />
+          <span>Authorize Clearance</span>
+        </button>
+      </div>
+    </Modal>
+  );
+};
 
 export const UserManagementModal: React.FC<{ 
   isOpen: boolean; 
