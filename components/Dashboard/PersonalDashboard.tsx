@@ -242,23 +242,29 @@ export const PersonalDashboard: React.FC<{
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 animate-scale-in">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Narrative Search</label>
-              <input 
-                type="text" 
-                placeholder="Description..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all"
-              />
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  placeholder="Search description..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 pl-8 text-xs focus:border-gold-bg outline-none transition-all"
+                />
+                <FileText size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-text transition-colors" />
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Entity / Account</label>
-              <input 
-                type="text" 
-                placeholder="Sender/Receiver"
-                value={entityFilter}
-                onChange={e => setEntityFilter(e.target.value)}
-                className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all"
-              />
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  placeholder="Sender/Receiver..."
+                  value={entityFilter}
+                  onChange={e => setEntityFilter(e.target.value)}
+                  className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 pl-8 text-xs focus:border-gold-bg outline-none transition-all"
+                />
+                <CreditCard size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-text transition-colors" />
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Start Date</label>
@@ -339,8 +345,20 @@ export const PersonalDashboard: React.FC<{
                   className="group hover:bg-white/5 transition-all cursor-pointer"
                 >
                   <td className="py-4">
-                    <p className="font-medium group-hover:gold-text transition-colors">{t.description}</p>
-                    <p className="text-[10px] text-white/20 font-mono tracking-tighter">{t.id}</p>
+                    <div className="flex flex-col">
+                      <p className="font-medium group-hover:gold-text transition-colors">{t.description}</p>
+                      <div className="flex items-center space-x-2 text-[10px] text-white/20 font-mono">
+                        <span>{t.id}</span>
+                        {(t.from || t.to) && (
+                          <>
+                            <span className="opacity-50">•</span>
+                            <span className="text-gold-text/50 capitalize">
+                              {t.type === 'DEBIT' ? `To: ${t.to || 'Unknown'}` : `From: ${t.from || 'Unknown'}`}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="py-4"><span className="text-[10px] bg-white/5 border border-white/5 px-2 py-1 rounded-full uppercase tracking-wider">{t.category}</span></td>
                   <td className="py-4 text-white/40 text-sm font-mono">{t.date}</td>

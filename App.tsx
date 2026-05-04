@@ -58,27 +58,11 @@ const LoginPage: React.FC = () => {
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Password</label>
-            <div className="relative">
-              <input 
-                type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 focus:border-gold-bg outline-none transition-all"
-                placeholder="••••••••"
-              />
-              {state.allUsers.find(u => u.username === username)?.settings.biometricLogin && (
-                <button 
-                  type="button"
-                  onClick={() => {
-                    showToast('Initiating Quantum Biometric Scan...', 'info');
-                    setTimeout(() => showToast('Biometric Verification Successful', 'success'), 1500);
-                    setTimeout(() => dispatch({ type: 'LOGIN', payload: state.allUsers.find(u => u.username === username)! }), 2000);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gold-bg/20 rounded-lg transition-all text-gold-bg group"
-                  title="Biometric Access"
-                >
-                  <ShieldCheck size={20} className="group-hover:scale-110 transition-transform" />
-                </button>
-              )}
-            </div>
+            <input 
+              type="password" required value={password} onChange={e => setPassword(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl p-4 focus:border-gold-bg outline-none transition-all"
+              placeholder="••••••••"
+            />
           </div>
           <button 
             type="submit" disabled={loading}
@@ -91,6 +75,24 @@ const LoginPage: React.FC = () => {
               </>
             )}
           </button>
+
+          {state.allUsers.find(u => u.username === username)?.settings.biometricLogin && (
+            <div className="pt-2">
+              <button 
+                type="button"
+                onClick={() => {
+                  showToast('Initiating Neural Biometric Scan...', 'info');
+                  setTimeout(() => showToast('Bio-Signature Verified', 'success'), 1500);
+                  setTimeout(() => dispatch({ type: 'LOGIN', payload: state.allUsers.find(u => u.username === username)! }), 2000);
+                }}
+                className="w-full bg-white/5 border border-gold-bg/30 text-gold-bg font-bold py-4 rounded-xl hover:bg-gold-bg/10 transition-all flex items-center justify-center space-x-2 border-dashed group"
+              >
+                <ShieldCheck size={20} className="group-hover:animate-pulse" />
+                <span className="uppercase tracking-widest text-[10px]">Biometric Fast-Path</span>
+              </button>
+            </div>
+          )}
+
           <div className="pt-4 text-center">
             <p className="text-[10px] text-white/20 uppercase tracking-[0.2em] font-bold flex items-center justify-center space-x-1">
               <ShieldCheck size={12} />
