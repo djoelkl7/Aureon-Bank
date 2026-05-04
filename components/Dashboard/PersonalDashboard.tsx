@@ -26,6 +26,11 @@ export const PersonalDashboard: React.FC<{
   const [receiverFilter, setReceiverFilter] = useState('');
   const [isFilterVisible, setIsFilterVisible] = useState(false);
 
+  // Recurring Filter States
+  const [recurringStatusFilter, setRecurringStatusFilter] = useState('All');
+  const [recurringFrequencyFilter, setRecurringFrequencyFilter] = useState('All');
+  const [isRecurringFilterVisible, setIsRecurringFilterVisible] = useState(false);
+
   // Derived Categories
   const categories = useMemo(() => {
     const cats = new Set(user.transactions.map(t => t.category));
@@ -51,6 +56,15 @@ export const PersonalDashboard: React.FC<{
     });
   }, [user.transactions, startDate, endDate, selectedCategory, selectedType, searchQuery, senderFilter, receiverFilter]);
 
+  // Filtered Recurring Payments
+  const filteredRecurringPayments = useMemo(() => {
+    return (user.recurringPayments || []).filter(p => {
+      const matchesStatus = recurringStatusFilter === 'All' || p.status === recurringStatusFilter.toUpperCase();
+      const matchesFrequency = recurringFrequencyFilter === 'All' || p.frequency === recurringFrequencyFilter.toUpperCase();
+      return matchesStatus && matchesFrequency;
+    });
+  }, [user.recurringPayments, recurringStatusFilter, recurringFrequencyFilter]);
+
   const resetFilters = () => {
     setStartDate('');
     setEndDate('');
@@ -59,6 +73,8 @@ export const PersonalDashboard: React.FC<{
     setSearchQuery('');
     setSenderFilter('');
     setReceiverFilter('');
+    setRecurringStatusFilter('All');
+    setRecurringFrequencyFilter('All');
   };
 
   const handleCancelRecurring = (id: string) => {
@@ -157,22 +173,76 @@ export const PersonalDashboard: React.FC<{
             <Calendar size={20} className="gold-text" /> 
             <span>Active Recurring Mandates</span>
           </h3>
-          <button 
-            onClick={onRecurringClick}
-            className="flex items-center space-x-2 text-[10px] font-bold gold-text uppercase tracking-widest bg-gold-bg/10 px-3 py-1.5 rounded-lg border border-gold-bg/20 hover:bg-gold-bg/20 transition-all"
-          >
-            <Repeat size={12} />
-            <span>Establish Mandate</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button 
+              onClick={() => setIsRecurringFilterVisible(!isRecurringFilterVisible)}
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border transition-all text-[10px] font-bold uppercase tracking-widest ${isRecurringFilterVisible ? 'gold-bg text-[#0B1C2D] border-gold-bg' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}
+            >
+              <Filter size={12} />
+              <span>Filters</span>
+              {(recurringStatusFilter !== 'All' || recurringFrequencyFilter !== 'All') && (
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse ml-0.5" />
+              )}
+            </button>
+            <button 
+              onClick={onRecurringClick}
+              className="flex items-center space-x-2 text-[10px] font-bold gold-text uppercase tracking-widest bg-gold-bg/10 px-3 py-1.5 rounded-lg border border-gold-bg/20 hover:bg-gold-bg/20 transition-all"
+            >
+              <Repeat size={12} />
+              <span>Establish Mandate</span>
+            </button>
+          </div>
         </div>
+
+        {isRecurringFilterVisible && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 p-4 bg-white/5 rounded-2xl border border-white/5 animate-scale-in">
+            <div className="space-y-1 relative">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Status</label>
+              <div className="relative">
+                <select 
+                  value={recurringStatusFilter}
+                  onChange={e => setRecurringStatusFilter(e.target.value)}
+                  className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all appearance-none cursor-pointer"
+                >
+                  <option value="All">All Statuses</option>
+                  <option value="Active">Active Only</option>
+                  <option value="Cancelled">Cancelled Only</option>
+                  <option value="Completed">Completed Only</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+              </div>
+            </div>
+            <div className="space-y-1 relative">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Frequency</label>
+              <div className="relative">
+                <select 
+                  value={recurringFrequencyFilter}
+                  onChange={e => setRecurringFrequencyFilter(e.target.value)}
+                  className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all appearance-none cursor-pointer"
+                >
+                  <option value="All">All Frequencies</option>
+                  <option value="Daily">Daily</option>
+                  <option value="Weekly">Weekly</option>
+                  <option value="Monthly">Monthly</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/20 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+        )}
         
-        {user.recurringPayments && user.recurringPayments.length > 0 ? (
+        {filteredRecurringPayments && filteredRecurringPayments.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {user.recurringPayments.map(p => (
+            {filteredRecurringPayments.map(p => (
               <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl relative overflow-hidden group">
                 {p.status === 'CANCELLED' && (
                   <div className="absolute inset-0 bg-[#0B1C2D]/80 flex items-center justify-center z-10 font-bold text-white/30 backdrop-blur-[1px]">
                     CANCELLED
+                  </div>
+                )}
+                {p.status === 'COMPLETED' && (
+                  <div className="absolute inset-0 bg-emerald-500/10 flex items-center justify-center z-10 font-bold text-emerald-400/50 backdrop-blur-[1px]">
+                    COMPLETED
                   </div>
                 )}
                 <div className="flex justify-between items-start mb-3">
@@ -212,15 +282,33 @@ export const PersonalDashboard: React.FC<{
           <div className="py-12 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center space-y-4 opacity-30">
             <Repeat size={40} className="text-white/20" />
             <div className="text-center">
-              <p className="text-sm font-bold uppercase tracking-widest">No Active Mandates</p>
-              <p className="text-[10px]">Establish automated liquidity flows for recurring obligations.</p>
+              <p className="text-sm font-bold uppercase tracking-widest">
+                {user.recurringPayments?.length > 0 ? 'No Matching Mandates' : 'No Active Mandates'}
+              </p>
+              <p className="text-[10px]">
+                {user.recurringPayments?.length > 0 
+                  ? 'Adjust your filters to locate establishing liquidity flows.' 
+                  : 'Establish automated liquidity flows for recurring obligations.'}
+              </p>
             </div>
-            <button 
-              onClick={onRecurringClick}
-              className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all border border-white/10"
-            >
-              Establish First Mandate
-            </button>
+            {user.recurringPayments?.length > 0 ? (
+              <button 
+                onClick={() => {
+                  setRecurringStatusFilter('All');
+                  setRecurringFrequencyFilter('All');
+                }}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all border border-white/10"
+              >
+                Clear Filters
+              </button>
+            ) : (
+              <button 
+                onClick={onRecurringClick}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all border border-white/10"
+              >
+                Establish First Mandate
+              </button>
+            )}
           </div>
         )}
       </div>
