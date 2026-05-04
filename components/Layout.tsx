@@ -67,30 +67,32 @@ export const Layout: React.FC<{ children: React.ReactNode; onSettingsClick?: () 
             <h2 className="text-sm font-bold text-white/40 uppercase tracking-widest">{t.welcome}, {state.currentUser.name}</h2>
           </div>
           
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4">
             <div className="relative group">
-              <button className="flex items-center space-x-2 text-sm font-bold text-white/60 hover:text-white transition-colors">
-                <Globe size={18} />
-                <span>{state.language}</span>
+              <button className="flex items-center space-x-2 text-sm font-bold text-white/60 hover:text-white transition-colors glass border border-white/10 px-3 py-2 rounded-xl hover:bg-white/5">
+                <Globe size={16} />
+                <span className="hidden sm:inline">{state.language}</span>
               </button>
-              <div className="absolute right-0 top-full mt-2 w-32 glass border border-white/10 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+              <div className="absolute right-0 top-full mt-2 w-32 glass border border-white/10 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto shadow-2xl">
                 {['EN', 'ES', 'FR'].map(lang => (
                   <button 
                     key={lang} 
                     onClick={() => dispatch({ type: 'SET_LANGUAGE', payload: lang as any })}
-                    className="w-full text-left p-3 hover:bg-white/5 text-sm transition-colors"
+                    className="w-full text-left p-3 hover:bg-white/10 text-sm transition-colors border-b border-white/5 last:border-0"
                   >
                     {lang === 'EN' ? 'English' : lang === 'ES' ? 'Español' : 'Français'}
                   </button>
                 ))}
               </div>
             </div>
+
             <button 
               onClick={onSettingsClick}
-              className="p-2 glass border-white/10 rounded-xl hover:bg-white/5 transition-colors relative"
+              className="flex items-center space-x-2 p-2 px-3 glass border border-white/10 rounded-xl hover:bg-white/5 transition-all text-white/60 hover:text-white group"
+              title="Terminal Configuration"
             >
-              <Settings size={18} />
-              <span className="absolute top-2 right-2 w-2 h-2 emerald-bg rounded-full border border-[#0B1C2D]" />
+              <Settings size={16} className="group-hover:rotate-90 transition-transform duration-500" />
+              <span className="text-xs font-bold uppercase tracking-widest hidden md:inline">Settings</span>
             </button>
           </div>
         </header>

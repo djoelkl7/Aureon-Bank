@@ -22,7 +22,8 @@ export const PersonalDashboard: React.FC<{
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [entityFilter, setEntityFilter] = useState('');
+  const [senderFilter, setSenderFilter] = useState('');
+  const [receiverFilter, setReceiverFilter] = useState('');
   const [isFilterVisible, setIsFilterVisible] = useState(false);
 
   // Derived Categories
@@ -41,13 +42,14 @@ export const PersonalDashboard: React.FC<{
         (selectedType === 'Debit' && t.type === 'DEBIT');
       const matchesSearch = !searchQuery || 
         t.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesEntity = !entityFilter || 
-        (t.from?.toLowerCase().includes(entityFilter.toLowerCase()) || 
-         t.to?.toLowerCase().includes(entityFilter.toLowerCase()));
+      const matchesSender = !senderFilter || 
+        (t.from?.toLowerCase().includes(senderFilter.toLowerCase()));
+      const matchesReceiver = !receiverFilter || 
+        (t.to?.toLowerCase().includes(receiverFilter.toLowerCase()));
       
-      return matchesDate && matchesCategory && matchesType && matchesSearch && matchesEntity;
+      return matchesDate && matchesCategory && matchesType && matchesSearch && matchesSender && matchesReceiver;
     });
-  }, [user.transactions, startDate, endDate, selectedCategory, selectedType, searchQuery, entityFilter]);
+  }, [user.transactions, startDate, endDate, selectedCategory, selectedType, searchQuery, senderFilter, receiverFilter]);
 
   const resetFilters = () => {
     setStartDate('');
@@ -55,7 +57,8 @@ export const PersonalDashboard: React.FC<{
     setSelectedCategory('All');
     setSelectedType('All');
     setSearchQuery('');
-    setEntityFilter('');
+    setSenderFilter('');
+    setReceiverFilter('');
   };
 
   const handleCancelRecurring = (id: string) => {
@@ -148,14 +151,22 @@ export const PersonalDashboard: React.FC<{
       </div>
 
       {/* Recurring Mandates */}
-      {user.recurringPayments && user.recurringPayments.length > 0 && (
-        <div className="glass p-6 rounded-3xl animate-fade-in">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold flex items-center space-x-2 text-white/80">
-              <Calendar size={20} className="gold-text" /> 
-              <span>Active Recurring Mandates</span>
-            </h3>
-          </div>
+      <div className="glass p-6 rounded-3xl animate-fade-in">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="font-bold flex items-center space-x-2 text-white/80">
+            <Calendar size={20} className="gold-text" /> 
+            <span>Active Recurring Mandates</span>
+          </h3>
+          <button 
+            onClick={onRecurringClick}
+            className="flex items-center space-x-2 text-[10px] font-bold gold-text uppercase tracking-widest bg-gold-bg/10 px-3 py-1.5 rounded-lg border border-gold-bg/20 hover:bg-gold-bg/20 transition-all"
+          >
+            <Repeat size={12} />
+            <span>Establish Mandate</span>
+          </button>
+        </div>
+        
+        {user.recurringPayments && user.recurringPayments.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {user.recurringPayments.map(p => (
               <div key={p.id} className="bg-white/5 border border-white/10 p-4 rounded-2xl relative overflow-hidden group">
@@ -197,8 +208,22 @@ export const PersonalDashboard: React.FC<{
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="py-12 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center space-y-4 opacity-30">
+            <Repeat size={40} className="text-white/20" />
+            <div className="text-center">
+              <p className="text-sm font-bold uppercase tracking-widest">No Active Mandates</p>
+              <p className="text-[10px]">Establish automated liquidity flows for recurring obligations.</p>
+            </div>
+            <button 
+              onClick={onRecurringClick}
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all border border-white/10"
+            >
+              Establish First Mandate
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Analytics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -229,7 +254,7 @@ export const PersonalDashboard: React.FC<{
             >
               <Filter size={16} />
               <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
-              {(startDate || endDate || selectedCategory !== 'All' || selectedType !== 'All' || searchQuery || entityFilter) && (
+              {(startDate || endDate || selectedCategory !== 'All' || selectedType !== 'All' || searchQuery || senderFilter || receiverFilter) && (
                 <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse ml-1" />
               )}
             </button>
@@ -239,7 +264,7 @@ export const PersonalDashboard: React.FC<{
 
         {/* Filter Bar */}
         {isFilterVisible && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 animate-scale-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3 mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 animate-scale-in">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Narrative Search</label>
               <div className="relative group">
@@ -254,16 +279,29 @@ export const PersonalDashboard: React.FC<{
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Entity / Account</label>
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Entity / Sender</label>
               <div className="relative group">
                 <input 
                   type="text" 
-                  placeholder="Sender/Receiver..."
-                  value={entityFilter}
-                  onChange={e => setEntityFilter(e.target.value)}
+                  placeholder="Sender name..."
+                  value={senderFilter}
+                  onChange={e => setSenderFilter(e.target.value)}
                   className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 pl-8 text-xs focus:border-gold-bg outline-none transition-all"
                 />
-                <CreditCard size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-text transition-colors" />
+                <ArrowDownLeft size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-text transition-colors" />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Entity / Receiver</label>
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  placeholder="Receiver name..."
+                  value={receiverFilter}
+                  onChange={e => setReceiverFilter(e.target.value)}
+                  className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 pl-8 text-xs focus:border-gold-bg outline-none transition-all"
+                />
+                <ArrowUpRight size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-gold-text transition-colors" />
               </div>
             </div>
             <div className="space-y-1">
