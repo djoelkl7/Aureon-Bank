@@ -58,11 +58,27 @@ const LoginPage: React.FC = () => {
           </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">Password</label>
-            <input 
-              type="password" required value={password} onChange={e => setPassword(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl p-4 focus:border-gold-bg outline-none transition-all"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input 
+                type="password" required value={password} onChange={e => setPassword(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 focus:border-gold-bg outline-none transition-all"
+                placeholder="••••••••"
+              />
+              {state.allUsers.find(u => u.username === username)?.settings.biometricLogin && (
+                <button 
+                  type="button"
+                  onClick={() => {
+                    showToast('Initiating Quantum Biometric Scan...', 'info');
+                    setTimeout(() => showToast('Biometric Verification Successful', 'success'), 1500);
+                    setTimeout(() => dispatch({ type: 'LOGIN', payload: state.allUsers.find(u => u.username === username)! }), 2000);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gold-bg/20 rounded-lg transition-all text-gold-bg group"
+                  title="Biometric Access"
+                >
+                  <ShieldCheck size={20} className="group-hover:scale-110 transition-transform" />
+                </button>
+              )}
+            </div>
           </div>
           <button 
             type="submit" disabled={loading}

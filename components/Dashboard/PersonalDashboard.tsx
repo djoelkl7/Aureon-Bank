@@ -21,6 +21,8 @@ export const PersonalDashboard: React.FC<{
   const [endDate, setEndDate] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [entityFilter, setEntityFilter] = useState('');
   const [isFilterVisible, setIsFilterVisible] = useState(false);
 
   // Derived Categories
@@ -37,16 +39,23 @@ export const PersonalDashboard: React.FC<{
       const matchesType = selectedType === 'All' || 
         (selectedType === 'Credit' && t.type === 'CREDIT') || 
         (selectedType === 'Debit' && t.type === 'DEBIT');
+      const matchesSearch = !searchQuery || 
+        t.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesEntity = !entityFilter || 
+        (t.from?.toLowerCase().includes(entityFilter.toLowerCase()) || 
+         t.to?.toLowerCase().includes(entityFilter.toLowerCase()));
       
-      return matchesDate && matchesCategory && matchesType;
+      return matchesDate && matchesCategory && matchesType && matchesSearch && matchesEntity;
     });
-  }, [user.transactions, startDate, endDate, selectedCategory, selectedType]);
+  }, [user.transactions, startDate, endDate, selectedCategory, selectedType, searchQuery, entityFilter]);
 
   const resetFilters = () => {
     setStartDate('');
     setEndDate('');
     setSelectedCategory('All');
     setSelectedType('All');
+    setSearchQuery('');
+    setEntityFilter('');
   };
 
   const handleCancelRecurring = (id: string) => {
@@ -220,7 +229,7 @@ export const PersonalDashboard: React.FC<{
             >
               <Filter size={16} />
               <span className="text-xs font-bold uppercase tracking-wider">Filters</span>
-              {(startDate || endDate || selectedCategory !== 'All' || selectedType !== 'All') && (
+              {(startDate || endDate || selectedCategory !== 'All' || selectedType !== 'All' || searchQuery || entityFilter) && (
                 <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse ml-1" />
               )}
             </button>
@@ -230,7 +239,27 @@ export const PersonalDashboard: React.FC<{
 
         {/* Filter Bar */}
         {isFilterVisible && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 animate-scale-in">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-8 p-4 bg-white/5 rounded-2xl border border-white/5 animate-scale-in">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Narrative Search</label>
+              <input 
+                type="text" 
+                placeholder="Description..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Entity / Account</label>
+              <input 
+                type="text" 
+                placeholder="Sender/Receiver"
+                value={entityFilter}
+                onChange={e => setEntityFilter(e.target.value)}
+                className="w-full bg-[#0B1C2D] border border-white/10 rounded-xl p-2 text-xs focus:border-gold-bg outline-none transition-all"
+              />
+            </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest ml-1">Start Date</label>
               <input 
